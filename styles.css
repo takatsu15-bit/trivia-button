@@ -116,6 +116,21 @@ h1 {
   font-size: 0.92rem;
 }
 
+.join-link {
+  display: inline-flex;
+  min-height: 40px;
+  align-items: center;
+  margin: 0 0 12px;
+  border: 1px solid #161411;
+  border-radius: 8px;
+  background: #22201d;
+  color: #fff7df;
+  padding: 0 14px;
+  font-size: 0.95rem;
+  font-weight: 900;
+  text-decoration: none;
+}
+
 .share-links {
   display: flex;
   flex-wrap: wrap;
@@ -160,10 +175,28 @@ h1 {
   background: rgba(255, 255, 255, 0.78);
 }
 
+.history-header {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: space-between;
+  margin: 0 0 12px;
+}
+
 .history-panel h2 {
   margin: 0 0 12px;
   color: var(--muted);
   font-size: 0.95rem;
+}
+
+.history-header h2 {
+  margin: 0;
+}
+
+.small-button {
+  min-height: 34px;
+  padding: 0 10px;
+  font-size: 0.84rem;
 }
 
 .history-list {
@@ -189,10 +222,65 @@ h1 {
   font-size: 0.9rem;
 }
 
+.history-item-header {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.history-delete {
+  min-height: 30px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--muted);
+  padding: 0 9px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 800;
+}
+
 .history-counts {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
+}
+
+.join-panel {
+  width: min(420px, 100%);
+  margin: 12vh auto 0;
+  padding: 22px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.86);
+  box-shadow: var(--shadow);
+}
+
+.join-panel h2 {
+  margin: 0 0 16px;
+  font-size: 1.8rem;
+}
+
+.join-form {
+  display: grid;
+  gap: 10px;
+}
+
+.join-form label {
+  color: var(--muted);
+  font-size: 0.9rem;
+  font-weight: 800;
+}
+
+.join-form input {
+  min-height: 48px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--ink);
+  padding: 0 12px;
+  font-size: 1.05rem;
 }
 
 .history-counts span {
@@ -729,7 +817,13 @@ meter::-webkit-meter-optimum-value {
 .participant-view .scoreboard,
 .participant-view .controls,
 .participant-view .share-panel,
-.participant-view .history-panel {
+.participant-view .history-panel,
+.participant-view .join-panel,
+.join-view .scoreboard,
+.join-view .controls,
+.join-view .share-panel,
+.join-view .history-panel,
+.join-view .participants {
   display: none;
 }
 

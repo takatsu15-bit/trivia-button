@@ -4,6 +4,7 @@ import {
   onValue,
   push,
   ref,
+  remove,
   runTransaction,
   set,
   update,
@@ -31,8 +32,13 @@ const resetButton = document.querySelector("#reset-button");
 const controlsEl = document.querySelector(".controls");
 const sharePanelEl = document.querySelector("#share-panel");
 const shareLinksEl = document.querySelector("#share-links");
+const joinLinkEl = document.querySelector("#join-link");
+const joinPanelEl = document.querySelector("#join-panel");
+const joinFormEl = document.querySelector("#join-form");
+const joinNameEl = document.querySelector("#join-name");
 const historyPanelEl = document.querySelector("#history-panel");
 const historyListEl = document.querySelector("#history-list");
+const clearHistoryButton = document.querySelector("#clear-history-button");
 const statusMessageEl = document.querySelector("#status-message");
 const heSoundEl = document.querySelector("#he-sound");
 
@@ -41,23 +47,27 @@ const db = getDatabase(app);
 const roomRef = ref(db, `rooms/${ROOM_ID}`);
 
 const params = new URLSearchParams(window.location.search);
+const isJoinView = params.has("join");
 const participantParam = Number(params.get("participant"));
 const participantIndex =
-  Number.isInteger(participantParam) && participantParam >= 1 && participantParam <= MAX_PARTICIPANTS
+  !isJoinView && Number.isInteger(participantParam) && participantParam >= 1 && participantParam <= MAX_PARTICIPANTS
     ? participantParam - 1
     : null;
 const isParticipantView = participantIndex !== null;
+const isMcView = !isParticipantView && !isJoinView;
 
 let state = createDefaultState();
 let previousCounts = [...state.counts];
 let hasLoaded = false;
 let isEditingName = false;
 
-document.body.classList.toggle("mc-view", !isParticipantView);
+document.body.classList.toggle("mc-view", isMcView);
 document.body.classList.toggle("participant-view", isParticipantView);
-controlsEl.hidden = isParticipantView;
-sharePanelEl.hidden = isParticipantView;
-historyPanelEl.hidden = isParticipantView;
+document.body.classList.toggle("join-view", isJoinView);
+controlsEl.hidden = !isMcView;
+sharePanelEl.hidden = !isMcView;
+historyPanelEl.hidden = !isMcView;
+joinPanelEl.hidden = !isJoinView;
 
 participantCountEl.addEventListener("change", () => {
   update(roomRef, {
@@ -80,6 +90,29 @@ resetButton.addEventListener("click", async () => {
   }
 
   await set(ref(db, `rooms/${ROOM_ID}/counts`), Array(MAX_PARTICIPANTS).fill(0));
+});
+
+clearHistoryButton.addEventListener("click", () => {
+  remove(ref(db, `rooms/${ROOM_ID}/history`));
+});
+
+joinFormEl.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const name = joinNameEl.value.trim();
+  if (!name) return;
+
+  setStatus("参加枠を準備しています...");
+  const assignedIndex = await assignParticipant(name);
+
+  if (assignedIndex === null) {
+    setStatus("参加枠がいっぱいです。MCに確認してください。");
+    return;
+  }
+
+  const url = new URL(window.location.href);
+  url.search = "";
+  url.searchParams.set("participant", String(assignedIndex + 1));
+  window.location.href = url.toString();
 });
 
 renderShareLinks();
@@ -159,6 +192,11 @@ function render() {
   participantsEl.replaceChildren();
   participantCountEl.value = String(state.participantCount);
 
+  if (isJoinView) {
+    updateTotal();
+    return;
+  }
+
   const indexes = isParticipantView
     ? [participantIndex]
     : Array.from({ length: state.participantCount }, (_, index) => index);
@@ -229,6 +267,33 @@ function addHe(index) {
   });
 }
 
+async function assignParticipant(name) {
+  let assignedIndex = null;
+
+  const result = await runTransaction(roomRef, (currentValue) => {
+    const room = normalizeState(currentValue ?? createDefaultState());
+    const existingIndex = room.names.findIndex((candidate) => candidate === name);
+    const emptyIndex = room.names
+      .slice(0, room.participantCount)
+      .findIndex((candidate, index) => candidate === `参加者 ${index + 1}`);
+    const targetIndex = existingIndex >= 0 ? existingIndex : emptyIndex;
+
+    if (targetIndex < 0) return;
+
+    assignedIndex = targetIndex;
+    room.names[targetIndex] = name;
+    return {
+      ...currentValue,
+      participantCount: room.participantCount,
+      counts: room.counts,
+      names: room.names,
+      history: currentValue?.history ?? {},
+    };
+  });
+
+  return result.committed ? assignedIndex : null;
+}
+
 function updateTotal() {
   const total = state.counts.slice(0, state.participantCount).reduce((sum, count) => sum + count, 0);
   totalCountEl.textContent = String(total);
@@ -266,11 +331,15 @@ function playHeSound(index) {
 }
 
 function renderShareLinks() {
-  if (isParticipantView || !shareLinksEl) return;
+  if (!isMcView || !shareLinksEl) return;
 
   const url = new URL(window.location.href);
   url.search = "";
   url.hash = "";
+  const joinUrl = new URL(url);
+  joinUrl.searchParams.set("join", "1");
+
+  joinLinkEl.href = joinUrl.toString();
 
   shareLinksEl.replaceChildren();
   for (let index = 0; index < state.participantCount; index += 1) {
@@ -285,7 +354,7 @@ function renderShareLinks() {
 }
 
 function renderHistory() {
-  if (isParticipantView || !historyListEl) return;
+  if (!isMcView || !historyListEl) return;
 
   historyListEl.replaceChildren();
 
@@ -303,6 +372,16 @@ function renderHistory() {
 
     const title = document.createElement("h3");
     title.textContent = `${formatDate(item.createdAt)} / 合計 ${item.total}へぇ`;
+    const deleteButton = document.createElement("button");
+    deleteButton.className = "history-delete";
+    deleteButton.type = "button";
+    deleteButton.textContent = "削除";
+    deleteButton.addEventListener("click", () => {
+      remove(ref(db, `rooms/${ROOM_ID}/history/${item.id}`));
+    });
+    const header = document.createElement("div");
+    header.className = "history-item-header";
+    header.append(title, deleteButton);
 
     const list = document.createElement("div");
     list.className = "history-counts";
@@ -313,7 +392,7 @@ function renderHistory() {
       list.append(row);
     });
 
-    article.append(title, list);
+    article.append(header, list);
     historyListEl.append(article);
   }
 }

@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>へぇボタン</title>
-    <link rel="stylesheet" href="styles.css?v=20260612-2" />
+    <link rel="stylesheet" href="styles.css?v=20260612-4" />
   </head>
   <body>
     <main class="app">
@@ -40,14 +40,26 @@
 
       <section class="share-panel" id="share-panel" aria-label="参加者用URL">
         <h2>参加者用URL</h2>
+        <a class="join-link" id="join-link" href="?join=1">共通参加URL</a>
         <div class="share-links" id="share-links"></div>
       </section>
 
       <p class="status-message" id="status-message" role="status"></p>
+      <section class="join-panel" id="join-panel" aria-labelledby="join-title">
+        <h2 id="join-title">参加する</h2>
+        <form class="join-form" id="join-form">
+          <label for="join-name">名前</label>
+          <input id="join-name" type="text" maxlength="20" autocomplete="name" required />
+          <button class="ghost-button" type="submit">自分のボタンへ</button>
+        </form>
+      </section>
       <section class="participants" id="participants" aria-label="参加者別へぇボタン"></section>
 
       <section class="history-panel" id="history-panel" aria-label="リセット履歴">
-        <h2>リセット履歴</h2>
+        <div class="history-header">
+          <h2>リセット履歴</h2>
+          <button class="ghost-button small-button" id="clear-history-button" type="button">履歴削除</button>
+        </div>
         <div class="history-list" id="history-list"></div>
       </section>
     </main>
@@ -90,6 +102,6 @@
     </template>
 
     <audio id="he-sound" src="assets/hee.mp3" preload="auto" playsinline></audio>
-    <script type="module" src="script.js?v=20260612-3"></script>
+    <script type="module" src="script.js?v=20260612-4"></script>
   </body>
 </html>
