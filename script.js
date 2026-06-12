@@ -256,7 +256,9 @@ function showMaxEffect(index) {
 }
 
 function playHeSound() {
-  const sound = heSoundEl?.cloneNode() || new Audio(soundUrl);
+  const sound = new Audio(soundUrl);
+  sound.preload = "auto";
+  sound.volume = 1;
   sound.currentTime = 0;
   sound.play().catch(() => {
     setStatus("音声を再生できませんでした。スマホの消音設定や音量を確認してください。");

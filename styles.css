@@ -238,32 +238,6 @@ select {
   gap: 16px;
 }
 
-.participant-view .app {
-  width: min(480px, calc(100% - 24px));
-}
-
-.participant-view .scoreboard {
-  display: none;
-}
-
-.participant-view .participants {
-  grid-template-columns: 1fr;
-  min-height: 100vh;
-  align-content: center;
-}
-
-.participant-view .participant {
-  gap: 18px;
-}
-
-.participant-view .button-count {
-  font-size: clamp(2.15rem, 11vw, 3.55rem);
-}
-
-.participant-view .participant output {
-  font-size: 2.4rem;
-}
-
 .participant {
   display: grid;
   gap: 14px;
@@ -744,4 +718,35 @@ meter::-webkit-meter-optimum-value {
   .participant {
     padding: 12px;
   }
+}
+
+.participant-view .app {
+  width: min(480px, calc(100% - 24px));
+  padding-top: 12px;
+}
+
+.participant-view .scoreboard,
+.participant-view .controls,
+.participant-view .share-panel,
+.participant-view .history-panel {
+  display: none;
+}
+
+.participant-view .participants {
+  grid-template-columns: 1fr;
+  min-height: 100vh;
+  align-content: center;
+}
+
+.participant-view .participant {
+  gap: 18px;
+  padding: 18px;
+}
+
+.participant-view .button-count {
+  font-size: clamp(2.15rem, 11vw, 3.55rem);
+}
+
+.participant-view .participant output {
+  font-size: 2.4rem;
 }
