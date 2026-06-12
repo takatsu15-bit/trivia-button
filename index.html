@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>へぇボタン</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="app">
+      <section class="scoreboard" aria-labelledby="app-title">
+        <div>
+          <p class="eyebrow">Trivia Counter</p>
+          <h1 id="app-title">へぇボタン</h1>
+        </div>
+        <div class="total" aria-live="polite">
+          <span class="total-label">合計へぇ数</span>
+          <span class="total-value" id="total-count">0</span>
+        </div>
+      </section>
+
+      <section class="controls" aria-label="操作">
+        <label class="participant-control" for="participant-count">
+          <span>参加人数</span>
+          <select id="participant-count">
+            <option value="1">1人</option>
+            <option value="2">2人</option>
+            <option value="3">3人</option>
+            <option value="4">4人</option>
+            <option value="5">5人</option>
+            <option value="6">6人</option>
+            <option value="7">7人</option>
+            <option value="8">8人</option>
+            <option value="9">9人</option>
+            <option value="10" selected>10人</option>
+          </select>
+        </label>
+        <button class="ghost-button" id="reset-button" type="button">リセット</button>
+      </section>
+
+      <section class="share-panel" id="share-panel" aria-label="参加者用URL">
+        <h2>参加者用URL</h2>
+        <div class="share-links" id="share-links"></div>
+      </section>
+
+      <section class="participants" id="participants" aria-label="参加者別へぇボタン"></section>
+    </main>
+
+    <template id="participant-template">
+      <article class="participant">
+        <header class="participant-header">
+          <label>
+            <span class="visually-hidden">参加者名</span>
+            <input class="name-input" type="text" maxlength="20" />
+          </label>
+          <output></output>
+        </header>
+        <button class="he-button" type="button" aria-label="へぇボタン">
+          <span class="dome" aria-hidden="true">
+            <span class="dome-dots"></span>
+          </span>
+          <span class="blue-ring" aria-hidden="true"></span>
+          <span class="button-face" aria-hidden="true">
+            <span class="ornament left"></span>
+            <span class="mini-light"></span>
+            <span class="button-count">0</span>
+            <span class="he-mark">へぇ</span>
+            <span class="ornament right"></span>
+          </span>
+          <span class="max-effect" aria-hidden="true">
+            <span class="max-label">満へぇ</span>
+            <span class="confetti c1"></span>
+            <span class="confetti c2"></span>
+            <span class="confetti c3"></span>
+            <span class="confetti c4"></span>
+            <span class="confetti c5"></span>
+            <span class="confetti c6"></span>
+            <span class="confetti c7"></span>
+            <span class="confetti c8"></span>
+          </span>
+        </button>
+        <meter min="0" max="20" value="0"></meter>
+      </article>
+    </template>
+
+    <script type="module" src="script.js"></script>
+  </body>
+</html>
