@@ -30,6 +30,7 @@ const resetButton = document.querySelector("#reset-button");
 const controlsEl = document.querySelector(".controls");
 const sharePanelEl = document.querySelector("#share-panel");
 const shareLinksEl = document.querySelector("#share-links");
+const statusMessageEl = document.querySelector("#status-message");
 const heSound = new Audio("assets/hee.mp3");
 
 const app = initializeApp(firebaseConfig);
@@ -64,8 +65,10 @@ resetButton.addEventListener("click", () => {
 });
 
 renderShareLinks();
+render();
 
 onValue(roomRef, (snapshot) => {
+  setStatus("");
   const remoteState = snapshot.val();
 
   if (!remoteState) {
@@ -78,6 +81,8 @@ onValue(roomRef, (snapshot) => {
   render();
   showNewMaxEffects();
   hasLoaded = true;
+}, (error) => {
+  setStatus(`Firebaseに接続できません: ${error.message}`);
 });
 
 function createDefaultState() {
@@ -216,4 +221,9 @@ function renderShareLinks() {
     link.textContent = `${state.names[index] || `参加者 ${index + 1}`}`;
     shareLinksEl.append(link);
   }
+}
+
+function setStatus(message) {
+  statusMessageEl.textContent = message;
+  statusMessageEl.hidden = !message;
 }
