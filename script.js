@@ -60,6 +60,7 @@ let state = createDefaultState();
 let previousCounts = [...state.counts];
 let hasLoaded = false;
 let isEditingName = false;
+let audioContext;
 
 document.body.classList.toggle("mc-view", isMcView);
 document.body.classList.toggle("participant-view", isParticipantView);
@@ -302,7 +303,11 @@ function updateTotal() {
 function showNewMaxEffects() {
   if (!hasLoaded) return;
 
-  for (let index = 0; index < state.participantCount; index += 1) {
+  const indexes = isParticipantView
+    ? [participantIndex]
+    : Array.from({ length: state.participantCount }, (_, index) => index);
+
+  for (const index of indexes) {
     if (previousCounts[index] < MAX_HE && state.counts[index] === MAX_HE) {
       showMaxEffect(index);
     }
@@ -326,8 +331,42 @@ function playHeSound(index) {
   heSoundEl.currentTime = 0;
   heSoundEl.volume = 1;
   heSoundEl.play().catch((error) => {
-    setStatus(`音声を再生できませんでした: ${error.name || "再生エラー"}`);
+    playFallbackHeSound();
+    setStatus(`MP3音声を再生できませんでした: ${error.name || "再生エラー"}。代替音を再生しています。`);
   });
+}
+
+function playFallbackHeSound() {
+  const AudioContext = window.AudioContext || window.webkitAudioContext;
+  if (!AudioContext) return;
+
+  audioContext ??= new AudioContext();
+  if (audioContext.state === "suspended") {
+    audioContext.resume();
+  }
+
+  const now = audioContext.currentTime;
+  const gain = audioContext.createGain();
+  gain.gain.setValueAtTime(0.0001, now);
+  gain.gain.exponentialRampToValueAtTime(0.24, now + 0.02);
+  gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.34);
+  gain.connect(audioContext.destination);
+
+  const first = audioContext.createOscillator();
+  first.type = "triangle";
+  first.frequency.setValueAtTime(520, now);
+  first.frequency.exponentialRampToValueAtTime(390, now + 0.16);
+  first.connect(gain);
+  first.start(now);
+  first.stop(now + 0.18);
+
+  const second = audioContext.createOscillator();
+  second.type = "sine";
+  second.frequency.setValueAtTime(360, now + 0.14);
+  second.frequency.exponentialRampToValueAtTime(310, now + 0.32);
+  second.connect(gain);
+  second.start(now + 0.14);
+  second.stop(now + 0.34);
 }
 
 function renderShareLinks() {

@@ -845,3 +845,14 @@ meter::-webkit-meter-optimum-value {
 .participant-view .participant output {
   font-size: 2.4rem;
 }
+
+.participant-view .max-label {
+  top: 9%;
+  padding: 10px 16px 11px;
+  font-size: clamp(1.7rem, 8vw, 2.4rem);
+}
+
+.participant-view .confetti {
+  width: 12px;
+  height: 18px;
+}
