@@ -35,7 +35,6 @@ const historyPanelEl = document.querySelector("#history-panel");
 const historyListEl = document.querySelector("#history-list");
 const statusMessageEl = document.querySelector("#status-message");
 const heSoundEl = document.querySelector("#he-sound");
-const soundUrl = new URL("assets/hee.mp3", window.location.href).toString();
 
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
@@ -202,6 +201,7 @@ function render() {
       }
     });
     if (isParticipantView) {
+      button.addEventListener("pointerdown", () => playHeSound(index));
       button.addEventListener("click", () => addHe(index));
     }
     participantsEl.append(card);
@@ -222,7 +222,6 @@ function updateName(index, value) {
 
 function addHe(index) {
   const countRef = ref(db, `rooms/${ROOM_ID}/counts/${index}`);
-  playHeSound();
 
   runTransaction(countRef, (currentValue) => {
     const count = clamp(currentValue ?? 0, 0, MAX_HE);
@@ -255,13 +254,14 @@ function showMaxEffect(index) {
   window.setTimeout(() => card.classList.remove("show-max"), 1500);
 }
 
-function playHeSound() {
-  const sound = new Audio(soundUrl);
-  sound.preload = "auto";
-  sound.volume = 1;
-  sound.currentTime = 0;
-  sound.play().catch(() => {
-    setStatus("音声を再生できませんでした。スマホの消音設定や音量を確認してください。");
+function playHeSound(index) {
+  if (state.counts[index] >= MAX_HE || !heSoundEl) return;
+
+  heSoundEl.pause();
+  heSoundEl.currentTime = 0;
+  heSoundEl.volume = 1;
+  heSoundEl.play().catch((error) => {
+    setStatus(`音声を再生できませんでした: ${error.name || "再生エラー"}`);
   });
 }
 

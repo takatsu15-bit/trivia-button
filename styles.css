@@ -321,6 +321,7 @@ select {
     0 17px 24px rgba(20, 43, 53, 0.24);
   color: var(--ink);
   cursor: pointer;
+  touch-action: manipulation;
   transform: translateY(-4px);
   transition:
     filter 140ms ease,
