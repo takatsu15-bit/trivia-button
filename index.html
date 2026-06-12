@@ -45,15 +45,20 @@
 
       <p class="status-message" id="status-message" role="status"></p>
       <section class="participants" id="participants" aria-label="参加者別へぇボタン"></section>
+
+      <section class="history-panel" id="history-panel" aria-label="リセット履歴">
+        <h2>リセット履歴</h2>
+        <div class="history-list" id="history-list"></div>
+      </section>
     </main>
 
     <template id="participant-template">
       <article class="participant">
         <header class="participant-header">
           <label>
-            <span class="visually-hidden">参加者名</span>
-            <input class="name-input" type="text" maxlength="20" />
-          </label>
+          <span class="visually-hidden">参加者名</span>
+          <input class="name-input" type="text" maxlength="20" />
+        </label>
           <output></output>
         </header>
         <button class="he-button" type="button" aria-label="へぇボタン">
@@ -84,6 +89,7 @@
       </article>
     </template>
 
+    <audio id="he-sound" src="assets/hee.mp3" preload="auto"></audio>
     <script type="module" src="script.js"></script>
   </body>
 </html>

@@ -2,6 +2,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/12.14.0/fireba
 import {
   getDatabase,
   onValue,
+  push,
   ref,
   runTransaction,
   set,
@@ -30,8 +31,11 @@ const resetButton = document.querySelector("#reset-button");
 const controlsEl = document.querySelector(".controls");
 const sharePanelEl = document.querySelector("#share-panel");
 const shareLinksEl = document.querySelector("#share-links");
+const historyPanelEl = document.querySelector("#history-panel");
+const historyListEl = document.querySelector("#history-list");
 const statusMessageEl = document.querySelector("#status-message");
-const heSound = new Audio("assets/hee.mp3");
+const heSoundEl = document.querySelector("#he-sound");
+const soundUrl = new URL("assets/hee.mp3", window.location.href).toString();
 
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
@@ -48,11 +52,13 @@ const isParticipantView = participantIndex !== null;
 let state = createDefaultState();
 let previousCounts = [...state.counts];
 let hasLoaded = false;
+let isEditingName = false;
 
 document.body.classList.toggle("mc-view", !isParticipantView);
 document.body.classList.toggle("participant-view", isParticipantView);
 controlsEl.hidden = isParticipantView;
 sharePanelEl.hidden = isParticipantView;
+historyPanelEl.hidden = isParticipantView;
 
 participantCountEl.addEventListener("change", () => {
   update(roomRef, {
@@ -60,8 +66,21 @@ participantCountEl.addEventListener("change", () => {
   });
 });
 
-resetButton.addEventListener("click", () => {
-  set(ref(db, `rooms/${ROOM_ID}/counts`), Array(MAX_PARTICIPANTS).fill(0));
+resetButton.addEventListener("click", async () => {
+  const visibleCounts = state.counts.slice(0, state.participantCount);
+  const total = visibleCounts.reduce((sum, count) => sum + count, 0);
+
+  if (total > 0) {
+    await push(ref(db, `rooms/${ROOM_ID}/history`), {
+      createdAt: Date.now(),
+      total,
+      participantCount: state.participantCount,
+      counts: visibleCounts,
+      names: state.names.slice(0, state.participantCount),
+    });
+  }
+
+  await set(ref(db, `rooms/${ROOM_ID}/counts`), Array(MAX_PARTICIPANTS).fill(0));
 });
 
 renderShareLinks();
@@ -78,6 +97,8 @@ onValue(roomRef, (snapshot) => {
 
   previousCounts = [...state.counts];
   state = normalizeState(remoteState);
+  if (isEditingName) return;
+
   render();
   showNewMaxEffects();
   hasLoaded = true;
@@ -90,6 +111,7 @@ function createDefaultState() {
     participantCount: MAX_PARTICIPANTS,
     counts: Array(MAX_PARTICIPANTS).fill(0),
     names: Array.from({ length: MAX_PARTICIPANTS }, (_, index) => `参加者 ${index + 1}`),
+    history: [],
   };
 }
 
@@ -98,6 +120,7 @@ function normalizeState(value) {
     participantCount: clamp(value.participantCount ?? MAX_PARTICIPANTS, 1, MAX_PARTICIPANTS),
     counts: normalizeCounts(value.counts),
     names: normalizeNames(value.names),
+    history: normalizeHistory(value.history),
   };
 }
 
@@ -110,6 +133,21 @@ function normalizeNames(names) {
     const name = names?.[index] ?? "";
     return typeof name === "string" && name.trim() ? name : `参加者 ${index + 1}`;
   });
+}
+
+function normalizeHistory(history) {
+  if (!history || typeof history !== "object") return [];
+
+  return Object.entries(history)
+    .map(([id, item]) => ({
+      id,
+      createdAt: Number(item?.createdAt ?? 0),
+      total: clamp(item?.total ?? 0, 0, MAX_PARTICIPANTS * MAX_HE),
+      counts: Array.isArray(item?.counts) ? item.counts.map((count) => clamp(count, 0, MAX_HE)) : [],
+      names: Array.isArray(item?.names) ? item.names : [],
+    }))
+    .sort((a, b) => b.createdAt - a.createdAt)
+    .slice(0, 10);
 }
 
 function clamp(value, min, max) {
@@ -149,7 +187,20 @@ function render() {
     button.disabled = isParticipantView && count >= MAX_HE;
     button.setAttribute("aria-label", `${displayName} のへぇボタン`);
 
-    nameInput.addEventListener("input", () => updateName(index, nameInput.value));
+    nameInput.addEventListener("focus", () => {
+      isEditingName = true;
+    });
+    nameInput.addEventListener("change", () => updateName(index, nameInput.value));
+    nameInput.addEventListener("blur", () => {
+      updateName(index, nameInput.value);
+      isEditingName = false;
+      render();
+    });
+    nameInput.addEventListener("keydown", (event) => {
+      if (event.key === "Enter") {
+        event.currentTarget.blur();
+      }
+    });
     if (isParticipantView) {
       button.addEventListener("click", () => addHe(index));
     }
@@ -158,10 +209,15 @@ function render() {
 
   updateTotal();
   renderShareLinks();
+  renderHistory();
 }
 
 function updateName(index, value) {
-  set(ref(db, `rooms/${ROOM_ID}/names/${index}`), value.trim() || `参加者 ${index + 1}`);
+  const name = value.trim() || `参加者 ${index + 1}`;
+  if (state.names[index] === name) return;
+
+  state.names[index] = name;
+  set(ref(db, `rooms/${ROOM_ID}/names/${index}`), name);
 }
 
 function addHe(index) {
@@ -200,8 +256,11 @@ function showMaxEffect(index) {
 }
 
 function playHeSound() {
-  heSound.currentTime = 0;
-  heSound.play().catch(() => {});
+  const sound = heSoundEl?.cloneNode() || new Audio(soundUrl);
+  sound.currentTime = 0;
+  sound.play().catch(() => {
+    setStatus("音声を再生できませんでした。スマホの消音設定や音量を確認してください。");
+  });
 }
 
 function renderShareLinks() {
@@ -221,6 +280,51 @@ function renderShareLinks() {
     link.textContent = `${state.names[index] || `参加者 ${index + 1}`}`;
     shareLinksEl.append(link);
   }
+}
+
+function renderHistory() {
+  if (isParticipantView || !historyListEl) return;
+
+  historyListEl.replaceChildren();
+
+  if (!state.history?.length) {
+    const empty = document.createElement("p");
+    empty.className = "history-empty";
+    empty.textContent = "まだ履歴はありません";
+    historyListEl.append(empty);
+    return;
+  }
+
+  for (const item of state.history) {
+    const article = document.createElement("article");
+    article.className = "history-item";
+
+    const title = document.createElement("h3");
+    title.textContent = `${formatDate(item.createdAt)} / 合計 ${item.total}へぇ`;
+
+    const list = document.createElement("div");
+    list.className = "history-counts";
+
+    item.counts.forEach((count, index) => {
+      const row = document.createElement("span");
+      row.textContent = `${item.names[index] || `参加者 ${index + 1}`}: ${count}`;
+      list.append(row);
+    });
+
+    article.append(title, list);
+    historyListEl.append(article);
+  }
+}
+
+function formatDate(timestamp) {
+  if (!timestamp) return "日時不明";
+
+  return new Intl.DateTimeFormat("ja-JP", {
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(new Date(timestamp));
 }
 
 function setStatus(message) {

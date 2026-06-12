@@ -152,6 +152,58 @@ h1 {
   display: none;
 }
 
+.history-panel {
+  margin: 18px 0 0;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.78);
+}
+
+.history-panel h2 {
+  margin: 0 0 12px;
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
+.history-list {
+  display: grid;
+  gap: 10px;
+}
+
+.history-item {
+  display: grid;
+  gap: 8px;
+  border-top: 1px solid var(--line);
+  padding-top: 10px;
+}
+
+.history-item:first-child {
+  border-top: 0;
+  padding-top: 0;
+}
+
+.history-item h3,
+.history-empty {
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.history-counts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.history-counts span {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  padding: 5px 8px;
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
 .participant-control {
   display: inline-flex;
   gap: 10px;
@@ -202,6 +254,14 @@ select {
 
 .participant-view .participant {
   gap: 18px;
+}
+
+.participant-view .button-count {
+  font-size: clamp(2.15rem, 11vw, 3.55rem);
+}
+
+.participant-view .participant output {
+  font-size: 2.4rem;
 }
 
 .participant {
